@@ -1,0 +1,106 @@
+from typing import Any, Text, Dict, List
+
+from rasa_sdk import Action, Tracker
+from rasa_sdk.executor import CollectingDispatcher
+from rasa_sdk.forms import FormAction
+from rasa_sdk.events import SlotSet
+
+class RestaurantForm(FormAction):
+    """Restaurant reservation form"""
+
+    def name(self) -> Text:
+        return "restaurant_form"
+
+    @staticmethod
+    def required_slots(tracker: Tracker) -> List[Text]:
+        return ["guests", "date", "time", "cuisine", "location"]
+
+    def slot_mappings(self) -> Dict[Text, Any]:
+        return {"guests": self.from_entity(entity="guests",
+                                            intent=["inform_reservation"]),
+                "date": self.from_entity(entity="date",
+                                            intent=["inform_reservation"]),
+                "time": self.from_entity(entity="time",
+                                            intent=["inform_reservation"]),
+                "cuisine": self.from_entity(entity="cuisine",
+                                            intent=["inform_cuisine"]),
+                "location": self.from_entity(entity="location",
+                                            intent=["inform_location"])}
+
+    def submit(self,
+               dispatcher: CollectingDispatcher,
+               tracker: Tracker,
+               domain: Dict[Text, Any]) -> List[Dict]:
+        # Save the reservation details in MongoDB
+        guests = tracker.get_slot("guests")
+        date = tracker.get_slot("date")
+        time = tracker.get_slot("time")
+        cuisine = tracker.get_slot("cuisine")
+        location = tracker.get_slot("location")
+        # Code for saving data to MongoDB
+        return []
+
+class ActionGreet(Action):
+    """Greet the user"""
+
+    def name(self) -> Text:
+        return "action_greet"
+
+    def run(self,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        dispatcher.utter_message(text="Hello! How can I help you today?")
+        return []
+
+class ActionGoodbye(Action):
+    """Say goodbye to the user"""
+
+    def name(self) -> Text:
+        return "action_goodbye"
+
+    def run(self,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        dispatcher.utter_message(text="Goodbye! Have a nice day.")
+        return []
+
+class ActionDefaultFallback(Action):
+    """Default fallback action"""
+
+    def name(self) -> Text:
+        return "action_default_fallback"
+
+    def run(self,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        dispatcher.utter_message(text="Sorry, I didn't understand. Can you please rephrase?")
+        return []
+
+class ActionUnhandled(Action):
+    """Handle unhandled intents"""
+
+    def name(self) -> Text:
+        return "action_unhandled"
+
+    def run(self,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        dispatcher.utter_message(text="I'm sorry, I don't know how to help with that. Can I assist you with something else?")
+        return []
+
+class ActionRestart(Action):
+    """Restart the conversation"""
+
+    def name(self) -> Text:
+        return "action_restart"
+
+    def run(self,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        return [SlotSet(slot, None) for slot in self.slots_to_reset]
+
